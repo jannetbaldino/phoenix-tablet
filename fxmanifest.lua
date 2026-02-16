@@ -5,10 +5,12 @@ lua54 'yes'
 
 description 'PRP Tablet (NUI)'
 
-ui_page 'ui/index.html'
+ui_page 'ui/dist/index.html'
 
 files {
   'ui/index.html',
+  'ui/dist/index.html',
+  'ui/dist/assets/**',
   'ui/styles.css',
   'ui/app.js',
   'ui/assets/**'
