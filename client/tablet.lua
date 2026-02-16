@@ -194,6 +194,193 @@ RegisterNUICallback('biz_openPlacement', function(data, cb)
   cb({ ok = true })
 end)
 
+-- ============================================================
+-- PRP-TABLET parity callbacks (messages / settings / wallet / calls)
+-- Paste below your biz_* callbacks
+-- ============================================================
+
+-- Support a shared UI close action (phone already uses "close")
+RegisterNUICallback('close', function(_, cb)
+  closeTablet()
+  cb({ ok = true })
+end)
+
+-- Messages
+RegisterNUICallback('sendMessage', function(data, cb)
+  local peer = data and data.peer_number
+  local body = data and data.body
+
+  local ok, resp = pcall(function()
+    return lib.callback.await('prp-device:sendMessage', false, peer, body)
+  end)
+
+  if not ok then
+    cb({ ok = false, error = 'callback_failed' })
+    return
+  end
+
+  cb(resp or { ok = false })
+end)
+
+RegisterNUICallback('markNotifRead', function(data, cb)
+  if data and data.id then
+    TriggerServerEvent('prp-device:notifications:markRead', data.id)
+  end
+  cb({ ok = true })
+end)
+
+-- Settings
+RegisterNUICallback('saveSettings', function(data, cb)
+  local ok, resp = pcall(function()
+    return lib.callback.await('prp-device:settings:save', false, data)
+  end)
+
+  if not ok then
+    cb({ ok = false, error = 'callback_failed' })
+    return
+  end
+
+  cb(resp or { ok = false })
+end)
+
+-- Wallet
+RegisterNUICallback('walletGetAccounts', function(_, cb)
+  local ok, resp = pcall(function()
+    return lib.callback.await('prp-device:wallet:getAccounts', false)
+  end)
+
+  if not ok then
+    cb({ ok = false, error = 'callback_failed' })
+    return
+  end
+
+  cb(resp or { ok = false })
+end)
+
+RegisterNUICallback('walletHistory', function(_, cb)
+  local ok, resp = pcall(function()
+    return lib.callback.await('prp-device:wallet:history', false)
+  end)
+
+  if not ok then
+    cb({ ok = false, error = 'callback_failed' })
+    return
+  end
+
+  cb(resp or { ok = false })
+end)
+
+RegisterNUICallback('walletTransfer', function(data, cb)
+  local ok, resp = pcall(function()
+    return lib.callback.await('prp-device:wallet:transfer', false, data)
+  end)
+
+  if not ok then
+    cb({ ok = false, error = 'callback_failed' })
+    return
+  end
+
+  cb(resp or { ok = false })
+end)
+
+-- Calls (same callback names + payload flexibility as phone)
+RegisterNUICallback('callDial', function(data, cb)
+  local number = data and (data.number or data.to_number or data.toNumber)
+
+  local ok, resp = pcall(function()
+    return lib.callback.await('prp-device:callDial', false, number)
+  end)
+
+  if not ok then
+    cb({ ok = false, error = 'callback_failed' })
+    return
+  end
+
+  cb(resp or { ok = false })
+end)
+
+RegisterNUICallback('callAccept', function(data, cb)
+  local callId = data and (data.call_id or data.callId)
+
+  local ok, resp = pcall(function()
+    return lib.callback.await('prp-device:callAccept', false, callId)
+  end)
+
+  if not ok then
+    cb({ ok = false, error = 'callback_failed' })
+    return
+  end
+
+  cb(resp or { ok = false })
+end)
+
+RegisterNUICallback('callDecline', function(data, cb)
+  local callId = data and (data.call_id or data.callId)
+
+  local ok, resp = pcall(function()
+    return lib.callback.await('prp-device:callDecline', false, callId)
+  end)
+
+  if not ok then
+    cb({ ok = false, error = 'callback_failed' })
+    return
+  end
+
+  cb(resp or { ok = false })
+end)
+
+RegisterNUICallback('callHangup', function(data, cb)
+  local callId = data and (data.call_id or data.callId)
+
+  local ok, resp = pcall(function()
+    return lib.callback.await('prp-device:callHangup', false, callId)
+  end)
+
+  if not ok then
+    cb({ ok = false, error = 'callback_failed' })
+    return
+  end
+
+  cb(resp or { ok = false })
+end)
+
+-- ------------------------------------------------------------
+-- Server -> UI events (same as phone)
+-- ------------------------------------------------------------
+local function sendUI(action, data)
+  SendNUIMessage({ action = action, data = data })
+end
+
+RegisterNetEvent('prp-device:call:incoming', function(payload)
+  if not isOpen then return end
+  sendUI('callIncoming', payload)
+end)
+
+RegisterNetEvent('prp-device:call:outgoing', function(payload)
+  if not isOpen then return end
+  sendUI('callOutgoing', payload)
+end)
+
+RegisterNetEvent('prp-device:call:active', function(payload)
+  if not isOpen then return end
+  sendUI('callActive', payload)
+end)
+
+RegisterNetEvent('prp-device:call:ended', function(payload)
+  if not isOpen then return end
+  sendUI('callEnded', payload)
+end)
+
+RegisterNetEvent('prp-device:notify', function(payload)
+  if not isOpen then return end
+  sendUI('notify', payload)
+end)
+
+RegisterNetEvent('prp-device:message:new', function(msg)
+  if not isOpen then return end
+  sendUI('messageNew', msg)
+end)
+
 -- =================================
 -- HARD INPUT BLOCK WHILE TABLET OPEN
 -- =================================
